@@ -78,10 +78,10 @@ class ImageReadme():
         output_image = samProc.makeOutputImage(image, filtered_masks)
         imageUtils.saveImage(os.path.join(output_dir,f"{fid:02d}_filter_wholeness.png"), output_image)
             
-        # fid, thesefilters = self.appendFilter(thesefilters, "convexity")        
-        # filtered_masks, pebble_data = imageFilters.applyfilters(image, sam_masks_data, thesefilters)        
-        # output_image = samProc.makeOutputImage(image, filtered_masks)
-        # imageUtils.saveImage(os.path.join(output_dir,f"{fid:02d}_filter_convexity.png"), output_image)            
+        fid, thesefilters = self.appendFilter(thesefilters, "convexHull")        
+        filtered_masks, pebble_data = imageFilters.applyfilters(image, sam_masks_data, thesefilters)        
+        output_image = samProc.makeOutputImage(image, filtered_masks)
+        imageUtils.saveImage(os.path.join(output_dir,f"{fid:02d}_filter_convex_hull.png"), output_image)            
         
         fid, thesefilters = self.appendFilter(thesefilters, "complexity")        
         filtered_masks, pebble_data = imageFilters.applyfilters(image, sam_masks_data, thesefilters)        
