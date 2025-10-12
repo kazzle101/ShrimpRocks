@@ -26,7 +26,9 @@ class ClickImage:
         return
 
     def _find_font_path(self) -> str | None:
-        """Locate a TrueType font for crisp, readable text overlays."""
+        """
+        Locate a TrueType font for crisp, readable text overlays.
+        """
         candidates = [
             "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
             "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
@@ -43,7 +45,9 @@ class ClickImage:
         return None
 
     def _get_font(self, size: int) -> ImageFont.FreeTypeFont:
-        """Return a cached PIL FreeType font, falling back to the default bitmap font."""
+        """
+        Return a cached PIL FreeType font, falling back to the default bitmap font.
+        """
         key = int(size)
         if key not in self._font_cache:
             try:
@@ -164,10 +168,12 @@ class ClickImage:
             occlusion_info, exclusion_mask = self.occluded(mask_uint8, exclusion_mask, imgFilters.IOU_THRESH, imgFilters.OVERLAP_SELF_THRESH)
             complex = self.complexity(contour, imgFilters.EPSILON_FACTOR)
             
-
             mask_entries.append(
                 {
                     "mask": mask_bool,
+                    "bbox": bbox,
+                    "color": color,                    
+                    
                     "contour": contour,
                     "contour_points": len(contour),
                     "contour_area": hull["contour_area"],
@@ -176,8 +182,6 @@ class ClickImage:
                     "solidity": solidity,
                     "hull_diff": hull["hull_defect_area"],
                     "hull_diff_ratio": hull["hull_defect_ratio"],
-                    "bbox": bbox,
-                    "color": color,
                     "roundness": roundness,
                     
                     "perimeter": complex["perimeter"],
@@ -209,14 +213,40 @@ class ClickImage:
             
         return cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
     
+    def info_lines_extend(self, info_lines, highlighted_idx, entry, filter_defaults):
+        
+        info_lines.extend(
+            [
+                f"Mask #{highlighted_idx + 1}",
+                f"Contour points: {entry['contour_points']} (>= {filter_defaults['MIN_CONTOURS']})",
+                " ",
+                f"Area: {entry['contour_area']:.1f} px^2 (>= {filter_defaults['MIN_AREA']})",
+                f"Solidity: {entry['solidity']:.3f} (>= {filter_defaults['MIN_SOLIDITY']:.2f})",
+                f"Perimeter diff: {entry['perimeter_diff']:.1f} (<= {filter_defaults['CONVEX_HULL_DIFF']})",
+                f"Hull diff ratio: {entry['hull_diff_ratio']:.3f} (<= {filter_defaults['MAX_HULL_DIFF_RATIO']:.3f})",
+                f"Hull area diff: {entry['hull_diff']:.1f} px^2",
+                f"Roundness: {entry['roundness']:.3f} (>= {filter_defaults['MIN_ROUNDNESS']:.2f})",
+                "Occluded: ",
+                f" iou: {entry['iou']:.2f}  (>{filter_defaults['IOU_THRESH']:.2f})",
+                f" overlap_self: {entry['overlap_self']:.2f} (>{filter_defaults['OVERLAP_SELF_THRESH']:.2f})",
+                "Complexity: ",
+                f" perimeter: {entry['perimeter']:.2f}",
+                f" epsilon: {entry['epsilon']:.2f}",
+                f" num_vertices: {entry['num_vertices']} (>= {filter_defaults['MIN_VERTICES']})",
+                ]
+            )
+        
+        return info_lines
+   
     def makeClickImage(self, image_file):
         
         imgFilters = ImageFilters()
         imgUtilities = ImageUtilities()
         samProc = SAMprocess()   
         
+        screen_width, screen_height = imgUtilities.getCurrentScreenRes()
         ## filters to be used
-        filterList = ["minimumSize","touchingEdges"] #,"occluded", "wholeness", "convexHull", "complexity", "roundish"]
+        filterList = ["touchingEdges", "minimumSize", "occluded", "wholeness",]#, "convexHull", "complexity", "roundish"]
         
         print(f"loading image: {image_file}")
         # 1. Initialization (Run SAM only once)
@@ -233,25 +263,16 @@ class ClickImage:
             imgUtilities.showImage(current_image, self.windowTitle)
             return
 
-        filter_defaults = {
-            "min_contours": imgFilters.MIN_CONTOURS,
-            "min_area": imgFilters.MIN_AREA,
-            "min_solidity": imgFilters.MIN_SOLIDITY,
-            "convex_hull_diff": imgFilters.CONVEX_HULL_DIFF,
-            "max_hull_diff_ratio": imgFilters.MAX_HULL_DIFF_RATIO,
-            "min_roundness": imgFilters.MIN_ROUNDNESS,
-            "epsilion_factor": imgFilters.EPSILON_FACTOR,
-            "min_vertices": imgFilters.MIN_VERTICES, 
-            "iou_thresh": imgFilters.IOU_THRESH,
-            "overlap_self_thresh": imgFilters.OVERLAP_SELF_THRESH,
-        }
+        # get the default values, used in the output.
+        filter_defaults = imgFilters.getDefaults()
 
         window_name = self.windowTitle
         instructions = ["Left click a pebble to inspect", "Press 'q' or 'Esc' to close"]
         highlighted_idx = None
         display_image = current_image.copy()
         panel_width = 460
-        window_dims = (current_image.shape[1], current_image.shape[0], current_image)
+        screen_width, screen_height = imgUtilities.getCurrentScreenRes()
+        window_dims: tuple[int, int] | None = None
 
         def render_display():
             nonlocal window_dims
@@ -267,31 +288,19 @@ class ClickImage:
                 cv2.drawContours(vis, [entry["contour"]], -1, (0, 255, 0), 2)
                 x, y, w, h = entry["bbox"]
                 cv2.rectangle(vis, (x, y), (x + w, y + h), (0, 255, 255), 1)
-
-                info_lines.extend(
-                    [
-                        f"Mask #{highlighted_idx + 1}",
-                        f"Contour points: {entry['contour_points']} (>= {filter_defaults['min_contours']})",
-                        " ",
-                        f"Area: {entry['contour_area']:.1f} px^2 (>= {filter_defaults['min_area']})",
-                        f"Solidity: {entry['solidity']:.3f} (>= {filter_defaults['min_solidity']:.2f})",
-                        f"Perimeter diff: {entry['perimeter_diff']:.1f} (<= {filter_defaults['convex_hull_diff']})",
-                        f"Hull diff ratio: {entry['hull_diff_ratio']:.3f} (<= {filter_defaults['max_hull_diff_ratio']:.3f})",
-                        f"Hull area diff: {entry['hull_diff']:.1f} px^2",
-                        f"Roundness: {entry['roundness']:.3f} (>= {filter_defaults['min_roundness']:.2f})",
-                        "Occluded: ",
-                        f" iou: {entry['iou']:.2f}  (>{filter_defaults['iou_thresh']:.2f})",
-                        f" overlap_self: {entry['overlap_self']:.2f} (>{filter_defaults['overlap_self_thresh']:.2f})",                        
-                        "Complexity: ",
-                        f" perimeter: {entry['perimeter']:.2f}",
-                        f" epsilon: {entry['epsilon']:.2f}",
-                        f" num_vertices: {entry['num_vertices']} (>= {filter_defaults['min_vertices']})"                        
-                    ]
-                )
+                info_lines = self.info_lines_extend(info_lines, highlighted_idx, entry, filter_defaults)
 
             panel = self.draw_text_block(panel, info_lines)
             combined = np.concatenate((vis, panel), axis=1)
-            # window_dims = imgUtilities.setWindowScaleImage(combined)
+            combined_h, combined_w = combined.shape[:2]
+            
+            # Scale the window slightly larger than the content without oversizing
+            scale_w = screen_width * 0.9 / combined_w
+            scale_h = screen_height * 0.9 / combined_h
+            scale_factor = max(min(1.08, scale_w, scale_h), 0.1)
+            target_w = int(combined_w * scale_factor)
+            target_h = int(combined_h * scale_factor)
+            window_dims = (target_w, target_h)
             return combined
 
         def on_mouse(event, x, y, _flags, _param):
@@ -309,17 +318,16 @@ class ClickImage:
             highlighted_idx = selected
             display_image = render_display()
             if window_dims:
-                win_w, win_h, _ = window_dims
+                win_w, win_h = window_dims
                 cv2.resizeWindow(window_name, win_w, win_h)
 
         cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
         cv2.moveWindow(window_name, 100, 50)
-        height, width = current_image.shape[:2]
         cv2.setMouseCallback(window_name, on_mouse)
 
         display_image = render_display()
         if window_dims:
-            win_w, win_h, _ = window_dims
+            win_w, win_h = window_dims
             cv2.resizeWindow(window_name, win_w, win_h)
         while True:
             cv2.imshow(window_name, display_image)

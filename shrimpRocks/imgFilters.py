@@ -38,10 +38,31 @@ class ImageFilters():
         # is_roundish
         self.MIN_ROUNDNESS = 0.35           # Minimum roundness for is_roundish
 
+    def getDefaults(self) -> dict:
+        """
+        used by clkImage.py
+        """
+        
+        defaults = {
+            "MIN_CONTOURS": self.MIN_CONTOURS,
+            "MIN_AREA": self.MIN_AREA,
+            "BORDER_BUFFER": self.BORDER_BUFFER,
+            "IOU_THRESH": self.IOU_THRESH,
+            "OVERLAP_SELF_THRESH": self.OVERLAP_SELF_THRESH,
+            "MIN_SOLIDITY": self.MIN_SOLIDITY,
+            "MAX_DEFECT_RATIO": self.MAX_DEFECT_RATIO,
+            "EPSILON_FACTOR": self.EPSILON_FACTOR,
+            "MIN_VERTICES": self.MIN_VERTICES,
+            "CONVEX_HULL_DIFF": self.CONVEX_HULL_DIFF,
+            "MAX_HULL_DIFF_RATIO": self.MAX_HULL_DIFF_RATIO,
+            "MIN_ROUNDNESS": self.MIN_ROUNDNESS
+        }    
+        return defaults
     
-    def contourCheck(self, contours, min_contours: int=None) -> list[np.int32]:
+    def minimumContourFilter(self, contours, min_contours: int=None) -> list[np.int32]:
         """
         Checks if the contour is valid (at least self.MIN_CONTOURS points).
+        Selects the largest contour from those contours that make a mask
         """
         if min_contours is None:
             min_contours = self.MIN_CONTOURS
@@ -165,7 +186,7 @@ class ImageFilters():
         defect_ratio = deviation_length / hull_perimeter
 
         # Filter if the total non-convex perimeter is too high
-        print(f"Defect Ratio: {defect_ratio:.3f} (Max allowed: {maxDefectRatio:.3f})")
+        # print(f"Defect Ratio: {defect_ratio:.3f} (Max allowed: {maxDefectRatio:.3f})")
         if defect_ratio > maxDefectRatio:
             return False
 
@@ -196,7 +217,7 @@ class ImageFilters():
         perimeter_difference = contour_perimeter - hull_perimeter
         perimeter_defect_ratio = perimeter_difference / (hull_perimeter + 1e-6)
         
-        print(f"{hull_defect_ratio} > {maxHullDiffRatio} = {hull_defect_ratio > maxHullDiffRatio}")
+        # print(f"{hull_defect_ratio} > {maxHullDiffRatio} = {hull_defect_ratio > maxHullDiffRatio}")
         if hull_defect_ratio > maxHullDiffRatio:
             return False
         
@@ -205,7 +226,7 @@ class ImageFilters():
 
         return True
 
-    def complexShapeFilter(self, contour, epsilon_factor: float=None, min_vertices: int=None) ->bool:
+    def complexShapeFilter(self, contour, epsilon_factor: float=None, min_vertices: int=None) -> bool:
         """
         Filters a contour if its complexity (number of vertices after approximation) exceeds 
         the maximum allowed.
@@ -320,7 +341,7 @@ class ImageFilters():
                continue
       
             min_contours, _, _ = self.getTestValues("minimumContours", testVal)
-            contour = self.contourCheck(contours, min_contours)
+            contour = self.minimumContourFilter(contours, min_contours)
             if contour is None:
                 continue
             
@@ -342,7 +363,7 @@ class ImageFilters():
                     continue
                     
             _ , solidity = self.wholenessScore(contour, area)
-            # 4. Wholeness Score (Solidity) Check
+            # Wholeness Score (Solidity) Check
             if "wholeness" in filterList:
                 minSolidity, _, _ = self.getTestValues("wholeness", testVal)
                 wholeness, _ = self.wholenessScore(contour, area, minSolidity)
