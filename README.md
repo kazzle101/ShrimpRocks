@@ -23,7 +23,7 @@ You will also need the LLM, download and copy this file to the root of where you
 ```
 wget https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth
 ```
-Optional, and you have a suitable GPU: As the apt package does not include CUDA support, this is easy to enable and gives Segment Anything a speed boost:
+Optional, and you have a suitable GPU: As the apt package for torch does not include CUDA support, this is easy to enable and gives Segment Anything a speed boost:
 for your platform, install the cuda toolkit from nvidia first: <a href="https://developer.nvidia.com/cuda-downloads" target="_blank">https://developer.nvidia.com/cuda-downloads</a>
 ```
 sudo apt remove torch
@@ -58,24 +58,24 @@ options:
                         Using an image number, loads a filtered image, allows you to click on the masks for information
                         about the mask
 ```
-Note: exitsing images created with the options: --process, --averagesize, --segment, --chug and --makereadme are automatically deleted before the new files are written.
+Note: existing images created with the options: `--process, --averagesize, --segment, --chug and --makereadme` are automatically deleted before the new files are written.
 
 ## Image Processing and Measuring
 #### 1. Images are first processed with:
 ```
 python shrimpRocks.py --p
 ```
-__Source Images:__ We start with a selection of screen grabs, these can be found in the in the images/source directory:
+__Source Images:__ We start with a selection of screen grabs, these can be found in the in the `images/source` directory:
 
-<img src='./images/readmeImgs/01_source_image.png?raw=true' slt="Source Image" width='800' />
+<img src='./images/readmeImgs/01_source_image.png?raw=true' alt="Source Image" width='800' />
 
 __Ruler Dectection:__ OpenCV is used to crop away the GPS tracking data and find the inside top left of the ruler by detecting the horizontals and verticals, here shown as green and red lines:
 
-<img src='./images/readmeImgs/02_rulers_selected.png?raw=true' slt="Rulers Selected" width='400' />
+<img src='./images/readmeImgs/02_rulers_selected.png?raw=true' alt="Rulers Selected" width='400' />
 
-__Cropping:__ The image is cropped a fixed width and height and saved to the images/cropped directory
+__Cropping:__ The image is cropped a fixed width and height and saved to the `images/cropped` directory
 
-<img src='./images/readmeImgs/03_source_pebbles.png?raw=true' slt="Source Pebbles" width='300' />
+<img src='./images/readmeImgs/03_source_pebbles.png?raw=true' alt="Source Pebbles" width='300' />
 
 #### 2. Find the average pebble size:
 ```
@@ -83,50 +83,50 @@ python shrimpRocks.py --a
 ```
 __Initial Segmentation (Segment Anything AI):__ In this stage the quest is to select a sutiable range of pebbles in each image, preferably those that are on the surface. Once selected we can obtain the average area of the selected pebbles in pixels<sup>2</sup> and convert that to Centimetre<sup>2</sup>, much time was spent trying to have OpenCV do this nativley (see imgTests.py) but it gets confused by the shadows and struggled to select a whole pebble. After much experimentation I settled on using the Segment Anything AI from Meta. Using this we create a mask with all the pebbles selected:
 
-<img src='./images/readmeImgs/04_all_pebbles_selected.png?raw=true' slt="All Pebbles Selected" width='300' />
+<img src='./images/readmeImgs/04_all_pebbles_selected.png?raw=true' alt="All Pebbles Selected" width='300' />
 
-__Applying Filters:__ A number of different filters (in imgFilters.py) are applied to remove pebbles from the sample that do not qualify, some with more sucesss than others, the settings for each filter is a compromise so to have them work across the range of pebble sizes. First, those where the outline (contour) is too short, or that the area they take up is too small are removed:
+__Applying Filters:__ A number of different filters (in `imgFilters.py`) are applied to remove pebbles from the sample that do not qualify, some with more sucesss than others, the settings for each filter is a compromise so to have them work across the range of pebble sizes. First, those where the outline (contour) is too short, or that the area they take up is too small are removed:
 
-<img src='./images/readmeImgs/05_filter_minimum_size.png?raw=true' slt="Remove pebbles that are too small" width='300' />
+<img src='./images/readmeImgs/05_filter_minimum_size.png?raw=true' alt="Remove pebbles that are too small" width='300' />
 
 __Edge Overlap Filter:__ Those that are overlaping the image edge are removed:
 
-<img src='./images/readmeImgs/06_filter_touching_edge.png?raw=true' slt="Remove those that overlap the edge" width='300' />
+<img src='./images/readmeImgs/06_filter_touching_edge.png?raw=true' alt="Remove those that overlap the edge" width='300' />
 
 __Overlap Filter:__ Removes those that are overlapping/occluded, the suns shadow or a stain on a pebble can result in a mask within a mask, these are removed:
 
-<img src='./images/readmeImgs/07_filter_occluded.png?raw=true' slt="Remove those that overlap the edge" width='300' />
+<img src='./images/readmeImgs/07_filter_occluded.png?raw=true' alt="Remove those that overlap the edge" width='300' />
 
 __Wholeness Filter:__ Check for each mask for wholeness, see how solid it is, this example is a bit poor, it works bettwer with different pebble sizes:
 
-<img src='./images/readmeImgs/08_filter_wholeness.png?raw=true' slt="Wholeness Filter" width='300' />
+<img src='./images/readmeImgs/08_filter_wholeness.png?raw=true' alt="Wholeness Filter" width='300' />
 
 __Convex Hull Filter:__ Attempt to remove those with too high a convex edge, as these will probably be overlapping, this is the amount of difference beween the masked object and the outline of a rubber band streched around it:
 
-<img src='./images/readmeImgs/09_filter_convex_hull.png?raw=true' slt="Convex Hull Filter" width='300' />
+<img src='./images/readmeImgs/09_filter_convex_hull.png?raw=true' alt="Convex Hull Filter" width='300' />
 
 __Complexity Filter__ Attempts to remove those with a complex shape, as again these will probably be underneath other pebbles:
 
-<img src='./images/readmeImgs/10_filter_complexity.png?raw=true' slt="Complexity Filter" width='300' />
+<img src='./images/readmeImgs/10_filter_complexity.png?raw=true' alt="Complexity Filter" width='300' />
 
 __Roundness Filter:__ Removes objects that are mostly square, as these are also likely to be underneath other pebbles.
 
-<img src='./images/readmeImgs/11_filter_roundish.png?raw=true' slt="Rounded Filter" width='300' />
+<img src='./images/readmeImgs/11_filter_roundish.png?raw=true' alt="Rounded Filter" width='300' />
 
-Looking on the original images with the ruler I measured one centemeter to approimate 57 pixels in length. Each pebbles area is given in pixles, this is converted to cm^2 with some maths, the processed images are saved to images/analysed a plot graph is created too:
+Looking on the original images with the ruler I measured one centemetre to approimate 57 pixels in length. Each pebbles area is given in pixles, this is converted to cm^2 with some maths, the processed images are saved to `images/analysed` a plot graph is created too:
 
-<img src='./images/avg_sizes_plot.png?raw=true' slt="Average Sizes" width='550' />
+<img src='./images/avg_sizes_plot.png?raw=true' alt="Average Sizes" width='550' />
 
 On the images with the larger pebbles I think the sample size and variety of sizes is confusing the results, the settings are the same for all images and are a bit of a compromise, tweaking the settings would probably spoil the measuements in other images. With all that, I can confirm that the pebbles do, indeed, get larger as you traverse the beach from North West to South East. 
 
 ## Other Options
-These options are useful for fine-tuning the filters and inspecting the results. Image numbers are in the range 1 to 33 and correspond to those found in the images/source/ or images/cropped/ directories
+These options are useful for fine-tuning the filters and inspecting the results. Image numbers are in the range 1 to 33 and correspond to those found in the `images/source/` or `images/cropped/` directories
 
-__clickimage__ is very useful for quickly seeing the actual numbers used by the filters (see clkImage.py) clisk on a selected pebble to see some numbers.
+__clickimage__ is very useful for quickly seeing the actual numbers used by the filters (see `clkImage.py`) clisk on a selected pebble to see some numbers.
 ```
 python shrimpRocks.py --clickimage <image number>
 ```
-__chug__ use this to output a range of images for a particular filter, some setup is needed in chugSegment in imgAnalyse.py. Output files are saved to images/chugtest, I used this to tune the default values for the filters in imgFilters.py. 
+__chug__ use this to output a range of images for a particular filter, some setup is needed in chugSegment in imgAnalyse.py. Output files are saved to images/chugtest, I used this to tune the default values for the filters in `imgFilters.py`. 
 ```
 python shrimpRocks.py --chug <image number>
 ```

@@ -21,7 +21,7 @@ _imageCroppedDir = os.path.join(_imageDir, "cropped/")
 _imageAnalysedDir = os.path.join(_imageDir, "analysed/")
 _imageTestDir = os.path.join(_imageDir, "test/")
 # _settingsFile = os.path.join(_imageDir, "shrimpsettings.json")
-_oneCentimeter = 75  # pixels
+_oneCentimetre = 75  # pixels
 
 from shrimpRocks.getFiles import GetFiles
 from shrimpRocks.imgUtilities import ImageUtilities
@@ -35,8 +35,8 @@ def main():
     getfiles = GetFiles()
     imgUtils = ImageUtilities()
     imgCropping = ImageCropping(_imageDir)
-    imgAnalyse = ImageAnalyse(_oneCentimeter)
-    clkImage = ClickImage(_oneCentimeter)
+    imgAnalyse = ImageAnalyse(_oneCentimetre)
+    clkImage = ClickImage(_oneCentimetre)
     
     desc = f"""Futility for measuring pebble sizes on Chesil Beach.\n
     Image numbers are in the range 1 to 33 and correspond to those found in the {_sourceDir} or {_imageCroppedDir} directories"""
@@ -114,7 +114,7 @@ def main():
         getfiles.makeOutputDir(_imageCroppedDir)
         getfiles.deleteFiles(_imageCroppedDir)
         
-        print("looking for pebbles")        
+        print(f"cropping source images to: {_imageCroppedDir}")        
         c=1
         for i in images:
             img, _ = imgCropping.selectInsideYellowSquare(i)
@@ -133,7 +133,7 @@ def main():
             print(f"Image {imgID} not found, or file {filename} not found")
             return
                 
-        imgReadme = ImageReadme(_oneCentimeter, _sourceDir)
+        imgReadme = ImageReadme(_oneCentimetre, _sourceDir)
         output_dir = os.path.join(_imageDir, "readmeImgs/")
         getfiles.makeOutputDir(output_dir)
         getfiles.deleteFiles(output_dir)

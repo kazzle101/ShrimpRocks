@@ -14,8 +14,8 @@ from shrimpRocks.samProcess import SAMprocess
 
 class ImageAnalyse():
     
-    def __init__(self, oneCentimeter=75, outDir=None):
-        self.oneCentimeter = oneCentimeter  # pixels 
+    def __init__(self, oneCentimetre=75, outDir=None):
+        self.oneCentimetre = oneCentimetre  # pixels 
         self.windowTitle = "Image Analyse"
         self.outDir = outDir
         return
@@ -50,7 +50,7 @@ class ImageAnalyse():
     
     def pxAreaToCM2(self, pxArea: float) -> float:
         """Converts pixel area to square centimeters."""
-        cmArea = (pxArea / (self.oneCentimeter * self.oneCentimeter))        
+        cmArea = (pxArea / (self.oneCentimetre * self.oneCentimetre))        
         return cmArea
     
     def makeAverageSizes(self, image_list: list, imageAnalyseDir: str) -> list:
@@ -129,7 +129,7 @@ class ImageAnalyse():
         imgFilters = ImageFilters()
         samProc = SAMprocess()    
             
-        print(f"One centimeter = {self.oneCentimeter} pixels")
+        print(f"One centimeter = {self.oneCentimetre} pixels")
         print(f"processing: {image_file} to {outDir}")
         
         # 1. Initialization (Run SAM only once)

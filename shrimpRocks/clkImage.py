@@ -153,7 +153,7 @@ class ClickImage:
             mask_uint8 = (mask_bool.astype(np.uint8) * 255)
                         
             contours, _ = cv2.findContours(mask_uint8.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            contour = imgFilters.contourCheck(contours)
+            contour = imgFilters.minimumContourFilter(contours)
             if contour is None:
                 continue
             
