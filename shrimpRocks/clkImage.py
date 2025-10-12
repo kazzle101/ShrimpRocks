@@ -16,8 +16,8 @@ from shrimpRocks.samProcess import SAMprocess
 
 class ClickImage:
     
-    def __init__(self, oneCentimeter=75, outDir=None, font_size=24):
-        self.oneCentimeter = oneCentimeter  # pixels 
+    def __init__(self, oneCentimetre=75, outDir=None, font_size=24):
+        self.oneCentimetre = oneCentimetre  # pixels 
         self.windowTitle = "Click Image"
         self.outDir = outDir
         self.font_size = font_size

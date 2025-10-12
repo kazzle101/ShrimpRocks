@@ -16,10 +16,10 @@ from shrimpRocks.imgCropping import ImageCropping
 """ Generate image files for use in the README.md file to illustrate the filtering steps."""
 class ImageReadme():
     
-    def __init__(self, oneCentimeter, sourceDir):
+    def __init__(self, oneCentimetre, sourceDir):
         self.sourceDir = sourceDir
         self.windowTitle = "Readme Images"
-        self.oneCentimeter = oneCentimeter
+        self.oneCentimetre = oneCentimetre
         return
         
     def appendFilter(self, filterList: list, filter: str, offset: int=4) -> tuple:
@@ -30,7 +30,7 @@ class ImageReadme():
     def makeReadmeImages(self, imgID:int, image_file: str, output_dir: str):
         
         imageUtils = ImageUtilities()        
-        imageAnalyse = ImageAnalyse(self.oneCentimeter, output_dir)
+        imageAnalyse = ImageAnalyse(self.oneCentimetre, output_dir)
         imageCropping = ImageCropping(output_dir)
         imageFilters = ImageFilters()
         samProc = SAMprocess()        
