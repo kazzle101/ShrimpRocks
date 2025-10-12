@@ -97,7 +97,7 @@ __Overlap Filter:__ Removes those that are overlapping/occluded, the suns shadow
 
 <img src='./images/readmeImgs/07_filter_occluded.png?raw=true' slt="Remove those that overlap the edge" width='300' />
 
-__Wholness Filter:__ Check for each mask for wholeness, see how solid it is, this example is a bit poor, it works bettwer with different pebble sizes:
+__Wholeness Filter:__ Check for each mask for wholeness, see how solid it is, this example is a bit poor, it works bettwer with different pebble sizes:
 
 <img src='./images/readmeImgs/08_filter_wholeness.png?raw=true' slt="Wholeness Filter" width='300' />
 
