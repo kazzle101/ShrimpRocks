@@ -272,19 +272,20 @@ class ImageFilters():
     def applyfilters(self, image: list[np.ndarray], sam_masks: list, filterList: list, testVal: list = []) -> tuple:
         """
         Apply the filters, available filters:
-        ["minimumSize","touchingEdges","occluded", "wholeness", "convexHull", "conplexity", "roundish"]
+        ["minimumSize", "touchingEdges", "occluded", "wholeness", "convexHull", "complexity", "roundish"]
         
         Optional: testVal is used when testing a particular filter it is in the format:
         [{"filter": <filerName>, "val": [value,value,value]}, etc...]
         
         modifyer values:
-            minimumSize:    [min_area: int]
-            touchingEdges:  [border_buffer: int]
-            occluded:       [iou_thresh: float, overlap_self_thresh: float]
-            wholeness:      [min_solidity: float]
-            convexHull:     [max_hull_diff: float, maxHullDiffRatio: float]
-            complexity:     [epsilon_factor: float, min_vertices: int]
-            roundish:       [min_roundness: float]            
+            minimumContours: [min_contours: int]
+            minimumSize:     [min_area: int]
+            touchingEdges:   [border_buffer: int]
+            occluded:        [iou_thresh: float, overlap_self_thresh: float]
+            wholeness:       [min_solidity: float]
+            convexHull:      [max_hull_diff: float, maxHullDiffRatio: float]
+            complexity:      [epsilon_factor: float, min_vertices: int]
+            roundish:        [min_roundness: float]            
         """
     
         filtered_masks = []
@@ -292,7 +293,6 @@ class ImageFilters():
         
         height, width = image.shape[:2]
         exclusion_mask = np.zeros(image.shape[:2], dtype=np.uint8)
-        # imgFilters = ImageFilters(image)
 
         # Sort masks by area (smallest first)
         sorted_masks = sorted(sam_masks, key=lambda x: x['area'], reverse=False)
