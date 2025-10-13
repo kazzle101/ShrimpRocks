@@ -146,6 +146,11 @@ class ClickImage:
         
         exclusion_mask = np.zeros(image.shape[:2], dtype=np.uint8)
         
+        ## using the same default values as in ImageFilters
+        iou_thresh = imgFilters.defaults['IOU_THRESH']
+        overlap_self_thresh = imgFilters.defaults['OVERLAP_SELF_THRESH']
+        epsilon_factor = imgFilters.defaults['EPSILON_FACTOR']
+        
         mask_entries = []
         rng = np.random.default_rng(12345)
         for mask_data in filtered_masks:
@@ -165,8 +170,8 @@ class ClickImage:
             bbox = cv2.boundingRect(contour)
             color = tuple(int(c) for c in rng.integers(90, 255, size=3))
 
-            occlusion_info, exclusion_mask = self.occluded(mask_uint8, exclusion_mask, imgFilters.IOU_THRESH, imgFilters.OVERLAP_SELF_THRESH)
-            complex = self.complexity(contour, imgFilters.EPSILON_FACTOR)
+            occlusion_info, exclusion_mask = self.occluded(mask_uint8, exclusion_mask, iou_thresh, overlap_self_thresh)
+            complex = self.complexity(contour, epsilon_factor)
             
             mask_entries.append(
                 {
@@ -213,26 +218,26 @@ class ClickImage:
             
         return cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
     
-    def info_lines_extend(self, info_lines, highlighted_idx, entry, filter_defaults):
+    def info_lines_extend(self, info_lines, highlighted_idx, entry, defaults):
         
         info_lines.extend(
             [
                 f"Mask #{highlighted_idx + 1}",
-                f"Contour points: {entry['contour_points']} (>= {filter_defaults['MIN_CONTOURS']})",
+                f"Contour points: {entry['contour_points']} (>= {defaults['MIN_CONTOURS']})",
                 " ",
-                f"Area: {entry['contour_area']:.1f} px^2 (>= {filter_defaults['MIN_AREA']})",
-                f"Solidity: {entry['solidity']:.3f} (>= {filter_defaults['MIN_SOLIDITY']:.2f})",
-                f"Perimeter diff: {entry['perimeter_diff']:.1f} (<= {filter_defaults['CONVEX_HULL_DIFF']})",
-                f"Hull diff ratio: {entry['hull_diff_ratio']:.3f} (<= {filter_defaults['MAX_HULL_DIFF_RATIO']:.3f})",
+                f"Area: {entry['contour_area']:.1f} px^2 (>= {defaults['MIN_AREA']})",
+                f"Solidity: {entry['solidity']:.3f} (>= {defaults['MIN_SOLIDITY']:.2f})",
+                f"Perimeter diff: {entry['perimeter_diff']:.1f} (<= {defaults['CONVEX_HULL_DIFF']})",
+                f"Hull diff ratio: {entry['hull_diff_ratio']:.3f} (<= {defaults['MAX_HULL_DIFF_RATIO']:.3f})",
                 f"Hull area diff: {entry['hull_diff']:.1f} px^2",
-                f"Roundness: {entry['roundness']:.3f} (>= {filter_defaults['MIN_ROUNDNESS']:.2f})",
+                f"Roundness: {entry['roundness']:.3f} (>= {defaults['MIN_ROUNDNESS']:.2f})",
                 "Occluded: ",
-                f" iou: {entry['iou']:.2f}  (>{filter_defaults['IOU_THRESH']:.2f})",
-                f" overlap_self: {entry['overlap_self']:.2f} (>{filter_defaults['OVERLAP_SELF_THRESH']:.2f})",
+                f" iou: {entry['iou']:.2f}  (>{defaults['IOU_THRESH']:.2f})",
+                f" overlap_self: {entry['overlap_self']:.2f} (>{defaults['OVERLAP_SELF_THRESH']:.2f})",
                 "Complexity: ",
                 f" perimeter: {entry['perimeter']:.2f}",
                 f" epsilon: {entry['epsilon']:.2f}",
-                f" num_vertices: {entry['num_vertices']} (>= {filter_defaults['MIN_VERTICES']})",
+                f" num_vertices: {entry['num_vertices']} (>= {defaults['MIN_VERTICES']})",
                 ]
             )
         
@@ -263,8 +268,8 @@ class ClickImage:
             imgUtilities.showImage(current_image, self.windowTitle)
             return
 
-        # get the default values, used in the output.
-        filter_defaults = imgFilters.getDefaults()
+        # get the default values from ImageFilters, used in the output.
+        filter_defaults = imgFilters.defaults
 
         window_name = self.windowTitle
         instructions = ["Left click a pebble to inspect", "Press 'q' or 'Esc' to close"]

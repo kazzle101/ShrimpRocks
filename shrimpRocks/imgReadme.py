@@ -13,8 +13,11 @@ from shrimpRocks.samProcess import SAMprocess
 from shrimpRocks.imgAnalyse import ImageAnalyse
 from shrimpRocks.imgCropping import ImageCropping
 
-""" Generate image files for use in the README.md file to illustrate the filtering steps."""
+
 class ImageReadme():
+    """ 
+    Generate image files for use in the README.md file to illustrate the filtering steps.
+    """
     
     def __init__(self, oneCentimetre, sourceDir):
         self.sourceDir = sourceDir

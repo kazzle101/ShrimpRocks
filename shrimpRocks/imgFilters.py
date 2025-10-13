@@ -3,69 +3,35 @@ import numpy as np
 
 
 class ImageFilters():
-    """ takes the complete pebble masks and removes those that fail the filter"""
+    """ 
+    a selection of filters to remove pebble masks that do not qualify.
+    """
     
     def __init__(self):
- 
+        
         ## these are the default values
-        # contourCheck
-        self.MIN_CONTOURS = 85
-
-        # minimumSizeFiler
-        self.MIN_AREA = 3000                # Minimum area for a contour to be considered valid
-
-        # touchingEdges
-        self.BORDER_BUFFER = 5
-
-        # occlusionMask
-        self.IOU_THRESH = 0.05
-        self.OVERLAP_SELF_THRESH = 0.15
-        
-        # wholenessScore
-        self.MIN_SOLIDITY = 0.15            # Minimum solidity for wholeness score
-        
-        # convexShapeFilter
-        self.MAX_DEFECT_RATIO = 54 / 1000   # 0.054% threshold for the defect ratio
-       
-        # complexShapeFilter
-        self.EPSILON_FACTOR = 0.02          # For approxPolyDP in complex shape filter  #
-        self.MIN_VERTICES = 7               # Minimum number of vertices for complex shape filter
-        
-        # convexHullDifference
-        self.CONVEX_HULL_DIFF = 24          # Maximum allowed difference between contour and convex hull areas
-        self.MAX_HULL_DIFF_RATIO = 0.030
-        
-        # is_roundish
-        self.MIN_ROUNDNESS = 0.35           # Minimum roundness for is_roundish
-
-    def getDefaults(self) -> dict:
-        """
-        used by clkImage.py
-        """
-        
-        defaults = {
-            "MIN_CONTOURS": self.MIN_CONTOURS,
-            "MIN_AREA": self.MIN_AREA,
-            "BORDER_BUFFER": self.BORDER_BUFFER,
-            "IOU_THRESH": self.IOU_THRESH,
-            "OVERLAP_SELF_THRESH": self.OVERLAP_SELF_THRESH,
-            "MIN_SOLIDITY": self.MIN_SOLIDITY,
-            "MAX_DEFECT_RATIO": self.MAX_DEFECT_RATIO,
-            "EPSILON_FACTOR": self.EPSILON_FACTOR,
-            "MIN_VERTICES": self.MIN_VERTICES,
-            "CONVEX_HULL_DIFF": self.CONVEX_HULL_DIFF,
-            "MAX_HULL_DIFF_RATIO": self.MAX_HULL_DIFF_RATIO,
-            "MIN_ROUNDNESS": self.MIN_ROUNDNESS
+        self.defaults = {
+            "MIN_CONTOURS": 85,             # contourCheck
+            "MIN_AREA": 3000,               # minimumSizeFiler,  Minimum area for a contour to be considered valid
+            "BORDER_BUFFER": 5,             # touchingEdges
+            "IOU_THRESH": 0.5,              # occlusionMask
+            "OVERLAP_SELF_THRESH": 0.15,    # occlusionMask
+            "MIN_SOLIDITY": 0.15,           # wholenessScore
+            "MAX_DEFECT_RATIO": 54 / 1000,  # convexShapeFilter, 0.054% threshold for the defect ratio
+            "EPSILON_FACTOR": 0.02,         # complexShapeFilter, 
+            "MIN_VERTICES": 7,              # complexShapeFilter, Minimum number of vertices for complex shape filter
+            "CONVEX_HULL_DIFF": 24,         # convexHullDifference, Maximum allowed difference between contour and convex hull areas
+            "MAX_HULL_DIFF_RATIO": 0.030,   # convexHullDifference
+            "MIN_ROUNDNESS": 0.35           # is_roundish
         }    
-        return defaults
-    
+     
     def minimumContourFilter(self, contours, min_contours: int=None) -> list[np.int32]:
         """
         Checks if the contour is valid (at least self.MIN_CONTOURS points).
         Selects the largest contour from those contours that make a mask
         """
         if min_contours is None:
-            min_contours = self.MIN_CONTOURS
+            min_contours = self.defaults['MIN_CONTOURS']
         
         if not contours:
             return None
@@ -81,7 +47,7 @@ class ImageFilters():
         Filters contours based on area and perimeter.
         """
         if min_area is None:
-            min_area = self.MIN_AREA
+            min_area = self.defaults['MIN_AREA']
             
         # if min_contours is None:
         #     min_contours = self.MIN_CONTOURS
@@ -98,7 +64,7 @@ class ImageFilters():
         Checks if the mask touches the edges of the image within a specified buffer.
         """
         if border_buffer is None:
-            border_buffer = self.BORDER_BUFFER
+            border_buffer = self.defaults['BORDER_BUFFER']
         
         x, y, w, h = cv2.boundingRect(mask)
         touches_edge = (x < border_buffer or y < border_buffer or 
@@ -111,9 +77,9 @@ class ImageFilters():
         decides if a candidate pebble mask overlaps too much with ones already accepted
         """
         if iou_thresh is None:
-            iou_thresh = self.IOU_THRESH
+            iou_thresh = self.defaults['IOU_THRESH']
         if overlap_self_thresh is None:
-            overlap_self_thresh = self.OVERLAP_SELF_THRESH
+            overlap_self_thresh = self.defaults['OVERLAP_SELF_THRESH']
         
         # work with boolean masks
         cur = (mask > 0)
@@ -141,7 +107,7 @@ class ImageFilters():
         Wholeness Score (Solidity) Check 
         """
         if minSolidity is None:
-            minSolidity = self.MIN_SOLIDITY    
+            minSolidity = self.defaults['MIN_SOLIDITY']    
                     
         # Get indices for defects (hull) and points for area calculation (hull_points)
         # hull = cv2.convexHull(contour, returnPoints=False)
@@ -168,7 +134,7 @@ class ImageFilters():
         Filters a contour if its non-convex perimeter deviation exceeds the max defect ratio.
         """
         if maxDefectRatio is None:
-            maxDefectRatio = self.MAX_DEFECT_RATIO
+            maxDefectRatio = self.defaults['MAX_DEFECT_RATIO']
         
         # 1. Calculate perimeters
         hull_points = cv2.convexHull(contour, returnPoints=True)
@@ -198,10 +164,10 @@ class ImageFilters():
         non-convex (pebble covered by another) shape.
         """
         if convexHullDiff is None:
-            convexHullDiff = self.CONVEX_HULL_DIFF
+            convexHullDiff = self.defaults['CONVEX_HULL_DIFF']
             
         if maxHullDiffRatio is None:
-            maxHullDiffRatio = self.MAX_HULL_DIFF_RATIO
+            maxHullDiffRatio = self.defaults['MAX_HULL_DIFF_RATIO']
                     
         hull_points = cv2.convexHull(contour, returnPoints=True)
         if len(hull_points) < 3:
@@ -232,10 +198,10 @@ class ImageFilters():
         the maximum allowed.
         """
         if epsilon_factor is None:
-            epsilon_factor = self.EPSILON_FACTOR  # Default value if none provided
+            epsilon_factor = self.defaults['EPSILON_FACTOR']
                         
         if min_vertices is None:
-            min_vertices = self.MIN_VERTICES    # Default value if none provided
+            min_vertices = self.defaults['MIN_VERTICES']  
                         
         # Calculate the perimeter of the contour
         perimeter = cv2.arcLength(contour, True)
@@ -260,7 +226,7 @@ class ImageFilters():
         """        
         # Roundness = 4πA / P² -> ~1 for perfect circle, smaller for irregular
         if min_roundness is None:
-            min_roundness = self.MIN_ROUNDNESS
+            min_roundness = self.defaults['MIN_ROUNDNESS']
         
         m = (mask_bool.astype(np.uint8) * 255)
         cnts, _ = cv2.findContours(m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)

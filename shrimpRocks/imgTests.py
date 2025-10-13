@@ -13,10 +13,11 @@ class ImageTests():
         self.outDir = outDir
         self.imageTitle = "ImageTests"
         return
-    
-            
+                
     def convexHullDifferenceTest(self, contour, convexHullDiff=None):
-        """Creates an overlay showing deviations between the contour and its convex hull."""
+        """
+        Creates an overlay showing deviations between the contour and its convex hull.
+        """
         if convexHullDiff is None:
             convexHullDiff = self.CONVEX_HULL_DIFF
         
@@ -126,7 +127,9 @@ class ImageTests():
         return relabeled
     
     def makeOutputImage(self, image, filtered_masks):
-        """Draws the selected masks on the image and updates the specified window."""
+        """
+        Draws the selected masks on the image and updates the specified window.
+        """
         output_image = image.copy()
         
         outline_color = (0, 0, 255)  

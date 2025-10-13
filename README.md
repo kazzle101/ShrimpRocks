@@ -1,9 +1,11 @@
 # ShrimpRocks
-In September 2024, Mike on his Atomic Shrimp YouTube channel went to Chesil Beach in Dorset on the south coast of England, to demonstrate that the pebbles get larger along the length of the 18 mile long tombolo from Burton Bradstock (North West) to the Isle of Portland (South East). He challenged programmers to automate this analsys> This project is my attempt, using still images taken from the video to measure the average surface area of the pebbles in cm<sup>2</sup>, rather than phyiscally evaluating a sample.
+In September 2024, Mike on his Atomic Shrimp YouTube channel went to Chesil Beach in Dorset on the south coast of England, to demonstrate that the pebbles get larger along the length of the 29km (18 miles) long tombolo from Burton Bradstock (North West) to the Isle of Portland (South East). He challenged programmers to automate this analsys> This project is my attempt, using still images taken from the video to measure the average surface area of the pebbles in cm<sup>2</sup>, rather than phyiscally evaluating a sample.
 
-_The Atomic Strimp Video, Chesil Beach Pebble Survey Part 1 - Spending the Whole Day Looking at Gravel:_ <a href='https://www.youtube.com/watch?v=8RAuvyWM_2E' target='_blank'>https://www.youtube.com/watch?v=8RAuvyWM_2E</a>
+In my software each image is treated individually, no assumptions or expectations are applied as to the size of the pebbles in each image. 
 
-Each image is treated individually, no assumptions or expectations are applied as to the size of the pebbles in each image. 
+### The Atomic Strimp Videos
+- Chesil Beach Pebble Survey Part 1 - <a href='https://www.youtube.com/watch?v=8RAuvyWM_2E' target='_blank'>Spending the Whole Day Looking at Gravel</a>
+- Chesil Beach Pebble Survey Part 2 - <a href='https://www.youtube.com/watch?v=QUJO8g6jXWo' target='_blank'>Gravel Positioning System (Also, What if Everyone Took a Stone?)</a>
 
 ## Installation and Dependancies
 I wrote this in Python using a Debian Linux (trixie) terminal running in a WSL on my Windows computer, Nvidia CUDA gives a speed boost is but not a requirement. As is traditional with these kind of instructions, some elements may be alreay installed or missing. This is my setup, it should work for any deb based distro and only minor changes should be needed for the likes of Redhat syle distros. The apt package for OpenCV does not make use of CUDA, and installing it manually would be out of scope here.
@@ -117,7 +119,7 @@ Looking on the original images with the ruler I measured one centemetre to appro
 
 <img src='./images/avg_sizes_plot.png?raw=true' alt="Average Sizes" width='550' />
 
-On the images with the larger pebbles I think the sample size and variety of sizes is confusing the results, the settings are the same for all images and are a bit of a compromise, tweaking the settings would probably spoil the measuements in other images. With all that, I can confirm that the pebbles do, indeed, get larger as you traverse the beach from North West to South East. 
+On the images with the larger pebbles I think the sample size and variety of sizes is confusing the results, the settings are the same for all images and are a bit of a compromise, tweaking the settings would probably spoil the measurements in other images. With all that, I can confirm that the pebbles do, indeed, get larger as you traverse the beach from North West to South East. 
 
 ## Other Options
 These options are useful for fine-tuning the filters and inspecting the results. Image numbers are in the range 1 to 33 and correspond to those found in the `images/source/` or `images/cropped/` directories
