@@ -219,6 +219,9 @@ class ClickImage:
         return cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
     
     def info_lines_extend(self, info_lines, highlighted_idx, entry, defaults):
+        imgUtils = ImageUtilities()
+        
+        cmArea = imgUtils.pxAreaToCM2(entry['contour_area'], self.oneCentimetre) 
         
         info_lines.extend(
             [
@@ -226,6 +229,7 @@ class ClickImage:
                 f"Contour points: {entry['contour_points']} (>= {defaults['MIN_CONTOURS']})",
                 " ",
                 f"Area: {entry['contour_area']:.1f} px^2 (>= {defaults['MIN_AREA']})",
+                f"Area: {cmArea:.2f} cm^2",
                 f"Solidity: {entry['solidity']:.3f} (>= {defaults['MIN_SOLIDITY']:.2f})",
                 f"Perimeter diff: {entry['perimeter_diff']:.1f} (<= {defaults['CONVEX_HULL_DIFF']})",
                 f"Hull diff ratio: {entry['hull_diff_ratio']:.3f} (<= {defaults['MAX_HULL_DIFF_RATIO']:.3f})",
@@ -250,40 +254,66 @@ class ClickImage:
         samProc = SAMprocess()   
         
         screen_width, screen_height = imgUtilities.getCurrentScreenRes()
-        ## filters to be used
-        filterList = ["touchingEdges", "minimumSize", "occluded", "wholeness",]#, "convexHull", "complexity", "roundish"]
+        filters_config = [
+            ("touchingEdges", "Touch Edges"),
+            ("minimumSize", "Minimum Size"),
+            ("occluded", "Occluded"),
+            ("wholeness", "Wholeness"),
+            ("convexHull", "Convex Hull"),
+            ("complexity", "Complexity"),
+            ("roundish", "Roundish"),
+        ]
+        filter_states = {name: 1 for name, _ in filters_config}
         
         print(f"loading image: {image_file}")
         # 1. Initialization (Run SAM only once)
         mask_generator = samProc.load_sam()
         image, image_rgb = samProc.load_image(image_file)
         sam_masks = samProc.generate_masks(mask_generator, image_rgb)
-        current_image = image.copy()
         
-        filtered_masks, _ = imgFilters.applyfilters(image, sam_masks, filterList=filterList)
-        current_image = self.drawAllOutlines(image, filtered_masks)
-        mask_entries = self.makeMaskEntries(image, filtered_masks, imgFilters)
-        if not mask_entries:
-            print("No valid masks available for interaction; showing the original image.")
-            imgUtilities.showImage(current_image, self.windowTitle)
-            return
-
+        print("You can toggle filters using the checkboxes on the right.")
+        print("Updating the filters can take a few seconds and during that time it appears that nothing is happening.")
+        
+        current_image = image.copy()
+        filtered_masks: list[dict] = []
+        mask_entries: list[dict] = []
         # get the default values from ImageFilters, used in the output.
         filter_defaults = imgFilters.defaults
 
         window_name = self.windowTitle
-        instructions = ["Left click a pebble to inspect", "Press 'q' or 'Esc' to close"]
         highlighted_idx = None
         display_image = current_image.copy()
         panel_width = 460
         screen_width, screen_height = imgUtilities.getCurrentScreenRes()
         window_dims: tuple[int, int] | None = None
+        # controls_hint = "Toggle filters using the checkboxes in the panel"
+        button_regions: dict[str, tuple[int, int, int, int]] = {}
+        status_message: str | None = None
+        is_applying = False
+        display_scale = 1.0
+        vis_display_width = current_image.shape[1]
+
+        def active_filters() -> list[str]:
+            return [name for name, _ in filters_config if filter_states.get(name, 0)]
 
         def render_display():
-            nonlocal window_dims
+            nonlocal window_dims, button_regions, display_scale, vis_display_width
             vis = current_image.copy()
-            info_lines = list(instructions)
+            # active_labels = [label for name, label in filters_config if filter_states.get(name)]
+            # inactive_labels = [label for name, label in filters_config if not filter_states.get(name)]
+            info_lines = [
+                "Left click a pebble to inspect",
+                "Press 'q' or 'Esc' to close",
+                # controls_hint,
+                # f"Filters on: {', '.join(active_labels) if active_labels else 'None'}",
+                f"Masks kept: {len(mask_entries)} / {len(sam_masks)}",
+            ]
+            # if inactive_labels:
+            #     info_lines.append(f"Filters off: {', '.join(inactive_labels)}")
+            if not mask_entries:
+                info_lines.append("No masks pass the current filters.")
             panel = np.full((vis.shape[0], panel_width, 3), (32, 32, 32), dtype=np.uint8)
+            button_regions.clear()
 
             if highlighted_idx is not None and 0 <= highlighted_idx < len(mask_entries):
                 entry = mask_entries[highlighted_idx]
@@ -295,45 +325,141 @@ class ClickImage:
                 cv2.rectangle(vis, (x, y), (x + w, y + h), (0, 255, 255), 1)
                 info_lines = self.info_lines_extend(info_lines, highlighted_idx, entry, filter_defaults)
 
-            panel = self.draw_text_block(panel, info_lines)
+            # Draw filter checkboxes and info text on the panel
+            pil_panel = Image.fromarray(cv2.cvtColor(panel, cv2.COLOR_BGR2RGB))
+            draw = ImageDraw.Draw(pil_panel)
+            font = self._get_font(self.font_size)
+            font_px = getattr(font, "size", self.font_size)
+            line_spacing = max(int(font_px * 1.3), int(self.font_size * 1.5))
+
+            # Checkbox layout
+            checkbox_size = int(self.font_size * 0.8)
+            checkbox_gap = int(self.font_size * 0.6)
+            y_cursor = 15
+            x_padding = 20
+            panel_width_px, panel_height_px = pil_panel.size
+
+            if status_message:
+                msg_bg_top = max(0, y_cursor - 6)
+                msg_bg_bottom = min(panel_height_px, y_cursor + line_spacing + 6)
+                draw.rectangle((0, msg_bg_top, panel_width_px, msg_bg_bottom), fill=(70, 70, 70))
+                draw.text((x_padding, y_cursor), status_message, font=font, fill=(255, 214, 153))
+                y_cursor = msg_bg_bottom + checkbox_gap
+
+            draw.text((x_padding, y_cursor), "Filters:", font=font, fill=(220, 220, 220))
+            y_cursor += line_spacing
+            for name, label in filters_config:
+                box_top = y_cursor
+                box_bottom = y_cursor + checkbox_size
+                box_left = x_padding
+                box_right = x_padding + checkbox_size
+                draw.rectangle((box_left, box_top, box_right, box_bottom), outline=(240, 240, 240), width=2)
+                if filter_states.get(name):
+                    draw.rectangle((box_left + 4, box_top + 4, box_right - 4, box_bottom - 4), outline=None, fill=(120, 200, 120))
+                draw.text((box_right + checkbox_gap, y_cursor - 4), label, font=font, fill=(240, 240, 240))
+                button_regions[name] = (box_left, box_top, box_right, box_bottom)
+                y_cursor += checkbox_size + checkbox_gap
+
+            y_cursor += line_spacing // 2
+
+            panel = cv2.cvtColor(np.array(pil_panel), cv2.COLOR_RGB2BGR)
+            panel = self.draw_text_block(panel, info_lines, origin=(x_padding, y_cursor))
             combined = np.concatenate((vis, panel), axis=1)
             combined_h, combined_w = combined.shape[:2]
             
             # Scale the window slightly larger than the content without oversizing
             scale_w = screen_width * 0.9 / combined_w
             scale_h = screen_height * 0.9 / combined_h
-            scale_factor = max(min(1.08, scale_w, scale_h), 0.1)
-            target_w = int(combined_w * scale_factor)
-            target_h = int(combined_h * scale_factor)
-            window_dims = (target_w, target_h)
-            return combined
+            scale_factor = float(max(min(1.08, scale_w, scale_h), 0.1))
+            display_scale = scale_factor
+            vis_display_width = int(round(current_image.shape[1] * display_scale))
+            target_w = max(1, int(round(combined_w * display_scale)))
+            target_h = max(1, int(round(combined_h * display_scale)))
+            if display_scale != 1.0:
+                interpolation = cv2.INTER_AREA if display_scale < 1.0 else cv2.INTER_LINEAR
+                resized = cv2.resize(combined, (target_w, target_h), interpolation=interpolation)
+            else:
+                resized = combined
+            window_dims = (resized.shape[1], resized.shape[0])
+            return resized
 
-        def on_mouse(event, x, y, _flags, _param):
-            nonlocal highlighted_idx, display_image
-            if event != cv2.EVENT_LBUTTONDOWN:
-                return
-
-            selected = None
-            for idx in range(len(mask_entries) - 1, -1, -1):
-                mask = mask_entries[idx]["mask"]
-                if 0 <= y < mask.shape[0] and 0 <= x < mask.shape[1] and mask[y, x]:
-                    selected = idx
-                    break
-
-            highlighted_idx = selected
+        def refresh_display():
+            nonlocal display_image
             display_image = render_display()
             if window_dims:
                 win_w, win_h = window_dims
                 cv2.resizeWindow(window_name, win_w, win_h)
 
+        def refresh_filters():
+            nonlocal filtered_masks, current_image, mask_entries, highlighted_idx, status_message, is_applying
+            if is_applying:
+                return
+            is_applying = True
+            selected_filters = active_filters()
+            # print(f"Selected Filters: {selected_filters}")
+            status_message = "Please wait... updating filters"
+            refresh_display()
+            cv2.imshow(window_name, display_image)
+            cv2.waitKey(1)
+            try:
+                filtered_masks, _ = imgFilters.applyfilters(image, sam_masks, filterList=selected_filters)
+                if filtered_masks:
+                    current_image = self.drawAllOutlines(image, filtered_masks)
+                    mask_entries = self.makeMaskEntries(image, filtered_masks, imgFilters)
+                else:
+                    current_image = image.copy()
+                    mask_entries = []
+                highlighted_idx = None
+                # print("... filters updated")
+            except Exception:
+                traceback.print_exc()
+                current_image = image.copy()
+                mask_entries = []
+                highlighted_idx = None
+            finally:
+                status_message = None
+                is_applying = False
+                refresh_display()
+                cv2.imshow(window_name, display_image)
+                cv2.waitKey(1)
+
+        def on_mouse(event, x, y, _flags, _param):
+            nonlocal highlighted_idx, display_image, is_applying
+            if event != cv2.EVENT_LBUTTONDOWN:
+                return
+            if is_applying:
+                return
+            scale = display_scale if display_scale > 0 else 1.0
+            vis_width_display = vis_display_width
+            if x >= vis_width_display:
+                panel_x_display = x - vis_width_display
+                panel_x_orig = int(round(panel_x_display / scale))
+                panel_y_orig = int(round(y / scale))
+                for name, (bx0, by0, bx1, by1) in button_regions.items():
+                    if bx0 <= panel_x_orig <= bx1 and by0 <= panel_y_orig <= by1:
+                        filter_states[name] = 0 if filter_states[name] else 1
+                        refresh_filters()
+                        return
+                return
+            selected = None
+            x_orig = int(round(x / scale))
+            y_orig = int(round(y / scale))
+            for idx in range(len(mask_entries) - 1, -1, -1):
+                mask = mask_entries[idx]["mask"]
+                if 0 <= y_orig < mask.shape[0] and 0 <= x_orig < mask.shape[1] and mask[y_orig, x_orig]:
+                    selected = idx
+                    # print(f"pebble selected {selected} ")
+                    break
+            highlighted_idx = selected
+            refresh_display()
+            cv2.imshow(window_name, display_image)
+            cv2.waitKey(1)
+
         cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
         cv2.moveWindow(window_name, 100, 50)
         cv2.setMouseCallback(window_name, on_mouse)
 
-        display_image = render_display()
-        if window_dims:
-            win_w, win_h = window_dims
-            cv2.resizeWindow(window_name, win_w, win_h)
+        refresh_filters()
         while True:
             cv2.imshow(window_name, display_image)
             key = cv2.waitKey(30) & 0xFF

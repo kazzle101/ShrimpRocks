@@ -141,4 +141,9 @@ class ImageUtilities:
         width = root.winfo_screenwidth()
         height = root.winfo_screenheight()
         return width, height    
-        
+
+    def pxAreaToCM2(self, pxArea: float, oneCentimetre: int) -> float:
+        """Converts pixel area to square centimeters."""
+        cmArea = (pxArea / (oneCentimetre * oneCentimetre))        
+        return cmArea        
+

@@ -50,17 +50,17 @@ options:
   -h, --help            show this help message and exit
   -p, --process         Crop the original images ready for examination.
   -a, --averagesize     Show the average pebble sizes and output a plot after the images have been processed.
-  --croptest CROPTEST   Use the image number to test an individual image, for checking the crop process is working
+  --croptest CROPTEST   Use the image number to test an individual image, for checking the crop process is working.
   --segment SEGMENT     Filter Test, using the image number to display an individual rock image with the filters applied
   --chug CHUG           Filter Test, use an image number for testing a filter with a range of values, files are output to
-                        images/test/
+                        images/chugtest/.
   --makereadme MAKEREADME
-                        Make images for the readme.md file using an image number
+                        Make images for the readme.md file using an image number.
   --clickimage CLICKIMAGE
                         Using an image number, loads a filtered image, allows you to click on the masks for information
-                        about the mask
+                        about the mask.
 ```
-Note: existing images created with the options: `--process, --averagesize, --segment, --chug and --makereadme` are automatically deleted before the new files are written.
+__Note:__ existing images created with the options: `--process, --averagesize, --segment, --chug` and `--makereadme` are automatically deleted before the new files are written.
 
 ## Image Processing and Measuring
 #### 1. Images are first processed with:
@@ -87,7 +87,9 @@ __Initial Segmentation (Segment Anything AI):__ In this stage the quest is to se
 
 <img src='./images/readmeImgs/04_all_pebbles_selected.png?raw=true' alt="All Pebbles Selected" width='300' />
 
-__Applying Filters:__ A number of different filters (in `imgFilters.py`) are applied to remove pebbles from the sample that do not qualify, some with more success than others; the settings for each filter are a compromise so they work across the range of pebble sizes. First, those where the outline (contour) is too short, or that the area they take up is too small are removed:
+__Applying Filters:__ A number of different filters (in `imgFilters.py`) are applied to remove pebbles from the sample that do not qualify, some with more success than others; the settings for each filter are a compromise so they work across the range of pebble sizes and as the filters are applied accumulatively the latter filters show the least number of changes (for experimentation, see the `--clickimage` option below). 
+
+__Minumum Size:__ First, those where the outline (contour) is too short, or that the area they take up is too small are removed:
 
 <img src='./images/readmeImgs/05_filter_minimum_size.png?raw=true' alt="Remove pebbles that are too small" width='300' />
 
@@ -95,7 +97,7 @@ __Edge Overlap Filter:__ Those that are overlapping the image edge are removed:
 
 <img src='./images/readmeImgs/06_filter_touching_edge.png?raw=true' alt="Remove those that overlap the edge" width='300' />
 
-__Overlap Filter:__ Removes those that are overlapping/occluded, the sun's shadow or a stain on a pebble can result in a mask within a mask, these are removed:
+__Occlude Filter:__ Tidy up the mask, removes any small satellites that were captured when the mask was generated:
 
 <img src='./images/readmeImgs/07_filter_occluded.png?raw=true' alt="Remove those that overlap the edge" width='300' />
 
@@ -124,7 +126,7 @@ On the images with the larger pebbles I think the sample size and variety of siz
 ## Other Options
 These options are useful for fine-tuning the filters and inspecting the results. Image numbers are in the range 1 to 33 and correspond to those found in the `images/source/` or `images/cropped/` directories
 
-__clickimage__ is very useful for quickly seeing the actual numbers used by the filters (see `clkImage.py`) click on a selected pebble to see some numbers.
+__clickimage__ is very useful for quickly seeing the actual numbers used by the filters (see `clkImage.py`) click on a selected pebble to see some numbers, click on the filter checkbox to add or remove that filter from those being applied.
 ```
 python shrimpRocks.py --clickimage <image number>
 ```

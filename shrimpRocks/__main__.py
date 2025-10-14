@@ -42,13 +42,13 @@ def main():
     Image numbers are in the range 1 to 33 and correspond to those found in the {_sourceDir} or {_imageCroppedDir} directories"""
     
     parser = argparse.ArgumentParser(description=desc)
-    parser.add_argument("-p","--process", action='store_true', help="Crop the original images ready for examination")
-    parser.add_argument('-a', '--averagesize', action='store_true', help='Show the average pebble sizes and output a plot')  
-    parser.add_argument('--croptest', type=int, help='Use the image number to test an individual image, for checking the crop process is working', default=0)
-    parser.add_argument('--segment', type=int, help='Filer Test, using the image number display an indivdual rock image with the filters applied')
-    parser.add_argument('--chug', type=int, default=None, help=f'Filter Test, use an image number for testing a filter with a range of values, files are output to {_imageTestDir}')      
-    parser.add_argument('--makereadme', type=int, default=None, help=f'Make images for the readme.md file using an image number')
-    parser.add_argument('--clickimage', type=int, default=None, help=f'Using an image number, loads a filtered image, allows you to click on the masks for information about the mask')
+    parser.add_argument("-p","--process", action='store_true', help="Crop the original images ready for examination.")
+    parser.add_argument('-a', '--averagesize', action='store_true', help='Show the average pebble sizes and output a plot.')  
+    parser.add_argument('--croptest', type=int, help='Use the image number to test an individual image, for checking the crop process is working.', default=0)
+    parser.add_argument('--segment', type=int, help='Filer Test, using the image number display an indivdual rock image with the filters applied.')
+    parser.add_argument('--chug', type=int, default=None, help=f'Filter Test, use an image number for testing a filter with a range of values, files are output to {_imageTestDir}.')      
+    parser.add_argument('--makereadme', type=int, default=None, help=f'Make images for the readme.md file using an image number.')
+    parser.add_argument('--clickimage', type=int, default=None, help=f'Using an image number, loads a filtered image, allows you to click on the masks for information about the mask.')
 
     args = parser.parse_args()
     
