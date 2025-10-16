@@ -14,17 +14,6 @@ sudo apt install python3-opencv python3-natsort python3-scipy python3-sklearn py
 sudo apt install torch python3-onnxruntime python3-onnx python3-torchvision
 sudo pip install opencv-contrib-python --break-system-packages
 ```
-#### Install the Segment Anything AI:
-```
-cd ~/Downloads
-git clone https://github.com/facebookresearch/segment-anything.git
-cd segment-anything
-pip install -e . --break-system-packages
-```
-You will also need the LLM, download and copy this file to the root of where you installed ShrimpRocks:
-```
-wget https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth
-```
 Optional, and you have a suitable GPU: As the apt package for torch does not include CUDA support, this is easy to enable and gives Segment Anything a speed boost:
 for your platform, install the cuda toolkit from nvidia first: <a href="https://developer.nvidia.com/cuda-downloads" target="_blank">https://developer.nvidia.com/cuda-downloads</a>
 ```
@@ -37,6 +26,25 @@ cd ~
 git clone https://github.com/kazzle101/ShrimpRocks.git
 cd ShrimpRocks
 python shrimpRocks.py --help
+```
+There is also a `setup.py` which should work on distributions that use pip normally (its not been tested)
+```
+cd ~
+git clone https://github.com/kazzle101/ShrimpRocks.git
+cd ShrimpRocks
+pip install -e .
+```
+#### Install the Segment Anything AI:
+```
+cd ~/Downloads
+git clone https://github.com/facebookresearch/segment-anything.git
+cd segment-anything
+pip install -e . --break-system-packages
+```
+You will also need the LLM, download and copy this file to the root of where you installed ShrimpRocks:
+```
+cd ShrimpRocks
+wget https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth
 ```
 
 ### Usage and Options
@@ -127,6 +135,9 @@ On the images with the larger pebbles I think the sample size and variety of siz
 These options are useful for fine-tuning the filters and inspecting the results. Image numbers are in the range 1 to 33 and correspond to those found in the `images/source/` or `images/cropped/` directories
 
 __clickimage__ is very useful for quickly seeing the actual numbers used by the filters (see `clkImage.py`) click on a selected pebble to see some numbers, click on the filter checkbox to add or remove that filter from those being applied.
+
+<img src='./images/click_image.png?raw=true' alt="Click Image interface" width='300' />
+
 ```
 python shrimpRocks.py --clickimage <image number>
 ```
